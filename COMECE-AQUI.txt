@@ -1,0 +1,83 @@
+ALSA MATCH RESULTS - COMECE AQUI
+
+Esta edicao roda pelo Python. O arquivo Abrir-ALSA.bat e apenas um
+atalho que procura Python e abre resultado_app.py. Ele nao instala
+programas, nao baixa arquivos e nao altera protecoes do Windows.
+
+1. INSTALAR PYTHON (uma vez)
+
+Abra: https://www.python.org/downloads/windows/
+Clique em Download Python install manager e instale o gerenciador
+oficial seguindo a tela. A documentacao atual do Python recomenda
+esse gerenciador no Windows.
+
+Depois abra o menu Iniciar, digite Terminal e abra o Terminal.
+Digite o comando abaixo e aperte Enter:
+
+py install 3.12
+
+Aguarde a instalacao terminar. Esse comando baixa o Python pelo
+gerenciador oficial. Para verificar, digite:
+
+py -3.12 -m tkinter
+
+Uma pequena janela de teste deve abrir. Feche-a.
+Se voce ja tem Python 3.12 ou mais recente com Tkinter, pode pular
+a instalacao. Em instaladores tradicionais, mantenha Tcl/Tk e IDLE
+marcados e marque Add python.exe to PATH quando essa opcao aparecer.
+
+2. EXTRAIR O APLICATIVO
+
+Baixe o pacote ALSA-Python-v0.3.0.zip da Release oficial.
+Clique com o botao direito no ZIP > Extrair Tudo > Extrair.
+Abra a pasta extraida. Nao abra o app dentro do ZIP e nao separe
+a pasta assets: ela contem icone, logo e fontes.
+
+3. ABRIR COM DOIS CLIQUES
+
+Abra Abrir-ALSA.bat. Uma janela de terminal pode ficar aberta
+junto com o app; isso e normal nesta opcao. Use o aplicativo,
+confira a previa e clique Copiar mensagem. Cole no Discord.
+
+4. ABRIR SEM O BAT (alternativa)
+
+Abra a pasta extraida no Explorador de Arquivos. Clique na barra
+de endereco onde aparece o caminho da pasta, digite powershell
+e aperte Enter. Na janela que abrir, digite:
+
+py -3.12 resultado_app.py
+
+Se seu Python usa o comando python, tambem pode executar:
+
+python resultado_app.py
+
+5. AJUDA
+
+- Python nao encontrado: instale conforme o passo 1 e tente de novo.
+- py install nao funciona: voce pode estar usando o launcher antigo.
+  Consulte a documentacao oficial do gerenciador antes de substituir
+  sua instalacao: https://docs.python.org/3/using/windows.html
+- No module named tkinter: use uma instalacao com Tcl/Tk e IDLE.
+- Logo/icone nao encontrado: extraia o ZIP inteiro, incluindo assets.
+- Erro ao abrir: copie o texto exibido no terminal e relate em
+  https://github.com/kilinel/ResultLigaAlsa/issues
+  As Issues sao publicas; remova dados pessoais antes de publicar.
+
+DADOS E AVISOS DO WINDOWS
+
+Os cadastros e templates usam as mesmas preferencias da edicao EXE:
+%APPDATA%\ResultadoDaLiga\preferencias.json
+Trocar de edicao nao exige cadastrar tudo novamente. Nao abra duas
+edicoes para editar templates ao mesmo tempo. Dados da partida e
+edicoes pontuais da previa nao ficam salvos ao fechar.
+
+BAT e Python nao sao garantia de ausencia de avisos do Windows.
+Scripts baixados tambem podem receber alertas ou bloqueios. Nao e
+necessario desativar antivirus ou SmartScreen. Esta edicao permite
+executar o codigo-fonte com seu Python instalado; ela nao certifica
+que o codigo e seguro. Voce pode ler o BAT com o Bloco de Notas e
+revisar o codigo-fonte antes de executar.
+
+AUTORIA
+kilinel. Projeto comunitario independente.
+Codigo e compilacao: https://github.com/kilinel/ResultLigaAlsa

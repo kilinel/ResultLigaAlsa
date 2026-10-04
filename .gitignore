@@ -7,3 +7,4 @@ dist/
 preferencias.json
 preferencias.tmp
 *.exe
+work/

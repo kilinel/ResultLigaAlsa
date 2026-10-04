@@ -13,6 +13,14 @@ with tempfile.TemporaryDirectory() as folder:
     app = App()
     try:
         app.update()
+        assert app.copy_button.winfo_ismapped()
+        app.geometry('900x650')
+        app.update()
+        assert app.copy_button.winfo_rooty()+app.copy_button.winfo_height() <= app.winfo_rooty()+app.winfo_height()
+        app.open_templates()
+        app.update()
+        assert app.template_window.winfo_ismapped()
+        app.template_window.withdraw()
         assert app.window_icon.width() == 256
         assert app.header_logo.width() <= 80
         app.contacts['roles'] = {'Alpha': '<@&1>', 'Beta': '<@&2>'}
@@ -64,8 +72,22 @@ with tempfile.TemporaryDirectory() as folder:
         app.destroy()
     restored = App()
     try:
+        assert restored.contacts['players']['Player']=='<@7>'
+        assert 'Player' in restored.pickers['motm'].values
         assert 'AMISTOSO CUSTOM' in restored.template.get('1.0','end')
         assert 'RANKED CUSTOM' in restored.ranked_template.get('1.0','end')
         assert restored.results_ping.get() == '<@&99>'
+        restored.contact_kind.set('Jogador')
+        restored.contact_name.set('Franklin')
+        restored.contact_ping.set('123456789')
+        restored.save_contact()
+        assert json.loads(restored.state_file.read_text(encoding='utf-8'))['players']['Franklin']=='<@123456789>'
+        assert restored.state_file.with_name('preferencias.backup.json').exists()
     finally:
         restored.destroy()
+    again=App()
+    try:
+        assert again.contacts['players']['Franklin']=='<@123456789>'
+        assert 'Franklin' in again.pickers['motm'].values
+    finally:
+        again.destroy()

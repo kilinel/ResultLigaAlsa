@@ -19,6 +19,7 @@ The application requires no account, Discord login or bot token. It contains no 
 You can remove saved entries in the application. To delete all saved settings and contacts, close the application and delete:
 
 %APPDATA%\ResultadoDaLiga\preferencias.json
+%APPDATA%\ResultadoDaLiga\preferencias.backup.json
 
 ## Third-party services
 

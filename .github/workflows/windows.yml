@@ -27,22 +27,30 @@ jobs:
         run: python tests/ui_smoke.py
       - name: Gerar executÃ¡vel
         run: python -m PyInstaller --noconfirm --clean --onefile --windowed --icon assets/app.ico --add-data "assets;assets" --name ResultadoDaLigaALSA resultado_app.py
+      - name: Empacotar versao Python
+        shell: pwsh
+        run: |
+          $version = python -c "from resultado_app import APP_VERSION; print(APP_VERSION)"
+          Compress-Archive -Path resultado_app.py,Abrir-ALSA.bat,COMECE-AQUI.txt,README.md,CHANGELOG.md,PRIVACY.md,LICENSE,assets,tests -DestinationPath "dist/ALSA-Python-v$version.zip" -Force
       - name: Disponibilizar aplicativo
         uses: actions/upload-artifact@v7
         with:
           name: ResultadoDaLigaALSA-Windows
-          path: dist/ResultadoDaLigaALSA.exe
+          path: |
+            dist/ResultadoDaLigaALSA.exe
+            dist/ALSA-Python-*.zip
       - name: Publicar executÃ¡vel na versÃ£o
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
+          $pythonPackage = (Get-ChildItem -LiteralPath dist -Filter 'ALSA-Python-*.zip').FullName
           gh release view $env:GITHUB_REF_NAME
           if ($LASTEXITCODE -ne 0) {
-            gh release create $env:GITHUB_REF_NAME dist/ResultadoDaLigaALSA.exe --title "Resultado da Liga ALSA $env:GITHUB_REF_NAME" --generate-notes
+            gh release create $env:GITHUB_REF_NAME dist/ResultadoDaLigaALSA.exe $pythonPackage --title "Resultado da Liga ALSA $env:GITHUB_REF_NAME" --generate-notes
           } else {
-            gh release upload $env:GITHUB_REF_NAME dist/ResultadoDaLigaALSA.exe --clobber
+            gh release upload $env:GITHUB_REF_NAME dist/ResultadoDaLigaALSA.exe $pythonPackage --clobber
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

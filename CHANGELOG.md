@@ -1,13 +1,34 @@
-# Atualizações
+# Histórico de alterações
 
-## v0.2.0 — versão de testes
+## v0.3.0
 
-- Campos e botões arredondados, sem contorno de foco decorativo.
-- Versão centralizada no rodapé e botão Dúvidas / FAQ com respostas expansíveis.
-- Ranked: primeiro a 3 vitórias, até 5 partidas, com botão para adicionar a quarta e quinta.
-- Cada partida conta uma vitória para quem fez mais gols; série termina em 3–0, 3–1 ou 3–2.
-- REF selecionável entre jogadores salvos; ping final preservado nas preferências.
-- Editores separados para Template Amistoso e Template Ranked, com marcadores clicáveis e botão Salvar.
-- Preserva contatos e templates da versão anterior; ajusta o título antigo de sets para a regra atual.
+- Stats por partida dos dois times, com soma automática de gols, assistências, defesas/desarmes e saves por jogador.
+- Marcadores para stats, placar, vencedor e MVP de cada partida no template Ranked.
+- Formato personalizável das linhas de jogadores, salvo nas preferências.
+- Prévia editável para ajustes pontuais antes de copiar.
+- Botão Gerar novamente para aplicar os campos atuais e substituir as edições da prévia.
+- Caminho completo dos dados disponível no FAQ; botão para abrir a pasta em Cadastros.
+- Opção de execução pelo Python com atalho Abrir-ALSA.bat e guia de instalação.
+- Correção do caminho do ícone no BAT, que impedia a abertura.
 
-A versão permanece sem assinatura digital até a aprovação e integração do serviço de assinatura.
+## v0.2.2
+
+- Gravação imediata dos cadastros e atualização das listas de seleção.
+- Preservação dos cadastros gravados por outra sessão.
+- Backup das preferências antes da substituição do arquivo.
+- Leitura de JSON com BOM e proteção contra sobrescrita de preferências inválidas.
+- Botões para recarregar cadastros e abrir a pasta de dados.
+
+## v0.2.1
+
+- Botão Copiar mensagem fixo no rodapé, visível em janelas menores.
+- Editor de templates em janela ampla, com marcadores em faixa rolável.
+- Abas, menus e barras de rolagem sem os contornos brancos anteriores.
+
+## v0.2.0
+
+- Campos e botões arredondados.
+- Versão centralizada no rodapé e FAQ com respostas expansíveis.
+- Ranked com até cinco partidas: primeira equipe a somar três vitórias vence.
+- REF selecionável entre jogadores salvos e ping final salvo nas preferências.
+- Templates separados para Amistoso e Ranked, com marcadores clicáveis.

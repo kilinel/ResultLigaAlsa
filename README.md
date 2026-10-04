@@ -2,72 +2,96 @@
   <img src="assets/logo-github.png" alt="ALSA Match Results" width="420">
 </p>
 
-# Resultado da Liga ALSA
+# ALSA Match Results
 
-**Azure Latch South America League** — gere resultados de partidas prontos para colar no Discord.
+Organize os resultados das suas partidas de Azure Latch e monte uma mensagem pronta para publicar no Discord, em poucos cliques.
 
-Um aplicativo para Windows com interface escura, cadastros locais e dois modos: **Amistoso** e **Ranked / Detalhe**.
+O **Match Results ALSA** é um aplicativo gratuito para Windows feito por [kilinel](https://github.com/kilinel). Ele facilita o registro de amistosos, scrims e ranked, sem precisar montar a mensagem inteira à mão.
 
-Tipografia: **Inter** na interface e **JetBrains Mono** na prévia. As fontes acompanham o aplicativo, com suas licenças SIL OFL, e são carregadas apenas para o processo. No Tkinter, o fallback usa as fontes do sistema (Segoe UI e Consolas no Windows), equivalente ao papel de `system-ui` e `ui-monospace` em CSS.
+## O que você pode fazer
 
-Fontes originais: [Inter](https://github.com/rsms/inter) e [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono). Licenças incluídas em `assets/fonts/`.
-
-## Para quem joga na liga
-
-1. Abra a seção **Releases** deste repositório.
-2. Baixe `ResultadoDaLigaALSA.exe` da versão mais recente.
-3. Abra o aplicativo, selecione o modo e preencha a partida.
-4. Clique em **Copiar mensagem para o Discord** e cole no canal da liga.
-
-O executável é gerado pelo GitHub Actions. Não exige Python, instalação ou arquivo `.bat`. As versões só ficam disponíveis depois que o fluxo de compilação termina com sucesso.
-
-## Dois modos
-
-| Amistoso | Ranked / Detalhe |
+| Recurso | Como ajuda |
 | --- | --- |
-| Placar direto e vencedor automático | Melhor de 3 com resultado calculado pelos sets |
-| MOTM, MVP, MVA, MVD e GK | MVP de cada set e destaques da série |
-| Emojis, pings e HMs | Stats dos dois times, reservas, posições e REFS |
-| Template original MATCH RESULT | Template RESULTADOS DA RANKED |
+| **Amistoso** | Informe os times e o placar para gerar o resultado de amistosos e scrims. |
+| **Ranked / Detalhe** | Registre até cinco partidas; quem vencer três ganha a série. |
+| **Stats dos dois times** | Preencha gols, assistências, defesas/desarmes e saves, com posição, personagem e reservas. |
+| **Stats por partida** | Preencha cada partida e deixe o aplicativo somar os totais por jogador, ou informe os totais diretamente. |
+| **Destaques** | Inclua MOTM, MVP, MVA, MVD, GK, árbitro e HMs. |
+| **Jogadores e cargos salvos** | Cadastre os IDs do Discord uma vez e selecione os nomes nas próximas partidas. |
+| **Templates personalizados** | Salve um formato para Amistoso e outro para Ranked, incluindo as linhas de stats. |
+| **Prévia editável** | Confira e ajuste a mensagem antes de copiar para o Discord. |
 
-Em Ranked, preencha os sets em ordem. Quem vence dois sets ganha; em 2–0, deixe o terceiro set vazio. Estatísticas são totais da série preenchidos por você: **G** gols, **A** assistências, **D** defesas/desarmes e **S** saves. O aplicativo não coleta dados do jogo.
+O app organiza as informações que você preenche. Ao clicar em **Copiar mensagem**, basta colar no canal da liga com **Ctrl+V**. A ajuda dentro do aplicativo explica como obter os IDs para mencionar jogadores e cargos.
 
-## Salve jogadores e cargos uma vez
+## Como instalar e abrir
 
-Na aba **Jogadores e cargos**, informe um nome e o ID do Discord. O aplicativo transforma o ID em `<@ID>` para jogador ou `<@&ID>` para cargo. Depois basta selecionar o nome nos campos da partida.
+### 1. Instale o Python — somente na primeira vez
 
-Os dados ficam em `%APPDATA%\ResultadoDaLiga\preferencias.json`. Trocar o executável não apaga os cadastros. Para migrar da versão antiga, clique em **Importar cadastros da versão anterior** e escolha seu `preferencias.json`. O arquivo pessoal não deve ser enviado para o GitHub.
+Python é o programa que executa esta versão do aplicativo.
 
-## Privacidade e distribuição
+1. Acesse o [site oficial do Python para Windows](https://www.python.org/downloads/windows/).
+2. Baixe o **Python install manager** e siga as instruções de instalação.
+3. Abra o menu Iniciar, procure **Terminal** e abra.
+4. Cole este comando, pressione **Enter** e aguarde:
 
-O app funciona localmente, sem login, token de bot, webhook ou envio automático. Copia a mensagem para sua área de transferência; você escolhe onde colar. Emojis personalizados precisam existir no servidor do Discord. Mensagens extensas podem precisar ser enviadas em partes.
-
-O executável não possui assinatura digital. O código e o processo de compilação ficam públicos para inspeção.
-
-Este aplicativo é um projeto independente, de autoria do criador deste repositório, desenvolvido para facilitar a publicação de resultados pela comunidade. Não é um aplicativo oficial e não representa a liga ALSA, o Discord ou os desenvolvedores de Azure Latch.
-
-## Executar o código
-
-Requer Python 3.12 com Tcl/Tk:
-
-```sh
-python resultado_app.py
+```powershell
+py install 3.12
 ```
 
-Não há dependências externas para rodar o código.
+Se você já tem Python 3.12 ou mais recente com Tkinter instalado, pode passar para a próxima etapa. O guia [COMECE-AQUI.txt](COMECE-AQUI.txt) inclui a verificação da instalação e ajuda para dificuldades comuns.
 
-## Gerar o .exe pelo GitHub
+### 2. Baixe o aplicativo
 
-Em **Actions → Aplicativo Windows → Run workflow**, execute o fluxo. Quando terminar, baixe o artefato `ResultadoDaLigaALSA-Windows`.
+Na página de [Releases](https://github.com/kilinel/ResultLigaAlsa/releases), procure o pacote **ALSA-Python** nos arquivos da versão. Se ele ainda não estiver disponível, use **Code → Download ZIP** na página principal do repositório.
 
-Para publicar uma versão com download direto em Releases, crie uma tag `v1.0.0` (ou outra versão). O fluxo testa o app, compila o executável e anexa o arquivo à Release.
+Clique com o botão direito no ZIP e escolha **Extrair Tudo**. Abra a pasta extraída e mantenha os arquivos juntos, incluindo a pasta `assets`.
 
-Também é possível compilar em um Windows com Python:
+### 3. Abra e use
 
-```sh
-python -m pip install -r requirements-build.txt
-python -m unittest discover -s tests -v
-python -m PyInstaller --noconfirm --clean --onefile --windowed --icon assets/app.ico --add-data "assets;assets" --name ResultadoDaLigaALSA resultado_app.py
+Dê dois cliques em **Abrir-ALSA.bat**. Uma janela de terminal pode ficar aberta junto com o aplicativo; isso é normal.
+
+Escolha **Amistoso** ou **Ranked / Detalhe**, preencha a partida, confira a prévia e clique em **Copiar mensagem**. Depois, cole no Discord.
+
+Também é possível abrir diretamente pelo código Python. Na pasta extraída, clique na barra de endereço do Explorador de Arquivos, digite `powershell` e pressione Enter. Execute:
+
+```powershell
+py -3.12 resultado_app.py
 ```
 
-O arquivo final estará em `dist/ResultadoDaLigaALSA.exe`.
+Se sua instalação usa o comando `python`, execute `python resultado_app.py`.
+
+### Alternativa: executável para Windows
+
+Quando disponível na Release, **ResultadoDaLigaALSA.exe** abre o aplicativo sem precisar instalar Python. Essa opção pode exibir o aviso do SmartScreen explicado abaixo.
+
+## Sobre as versões Python, BAT e EXE
+
+O aplicativo é escrito em Python. O **BAT é um atalho de abertura**: ele procura uma instalação compatível do Python e executa o mesmo arquivo `resultado_app.py` que está neste repositório. Não instala programas, não baixa dependências e não altera as proteções do Windows.
+
+Essa opção facilita abrir o código diretamente, sem depender do executável empacotado. Nos testes no computador do autor, tanto o BAT quanto a execução pelo Python abriram sem aviso do SmartScreen. O comportamento pode variar conforme as configurações de outros computadores.
+
+O **EXE ainda não possui assinatura digital**. Por isso, o Windows pode apresentar “O Windows protegeu o computador” ao abrir o arquivo baixado. O SmartScreen considera a reputação do arquivo e do editor; esse aviso não é, por si só, uma detecção específica de vírus. Não é necessário desativar o antivírus para usar a versão Python.
+
+O código usado pelo app está disponível em [resultado_app.py](resultado_app.py). A criação do EXE é automatizada pelo **GitHub Actions**: o [workflow](.github/workflows/windows.yml) executa os testes, gera o aplicativo e anexa o resultado às Releases criadas por tags. Quem quiser conferir pode consultar o código da versão e os registros em [Actions](https://github.com/kilinel/ResultLigaAlsa/actions), ou executar o fonte diretamente.
+
+## Privacidade e dados salvos
+
+O app funciona localmente, sem login do Discord, token de bot, webhook ou envio automático de mensagens. Ao copiar um resultado, o texto vai para a área de transferência do seu computador; você escolhe onde colar.
+
+Jogadores, cargos, templates e preferências ficam em `%APPDATA%\ResultadoDaLiga`. Você pode abrir essa pasta pelo botão em **Cadastros**. As versões Python e EXE usam os mesmos dados, e trocar os arquivos do aplicativo preserva os cadastros.
+
+Os dados da partida e os ajustes pontuais da prévia não ficam salvos ao fechar. Para conhecer os detalhes de armazenamento e exclusão, consulte a [Política de Privacidade](PRIVACY.md).
+
+## Atualizações
+
+Consulte o [histórico de alterações](CHANGELOG.md) para saber o que mudou em cada versão e a página de [Releases](https://github.com/kilinel/ResultLigaAlsa/releases) para os downloads disponíveis.
+
+## Problemas e sugestões
+
+Encontrou um problema ou tem uma ideia? Abra uma [Issue](https://github.com/kilinel/ResultLigaAlsa/issues). Informe a versão do app e explique o que aconteceu; screenshots e passos para reproduzir ajudam. Evite incluir informações pessoais, pois as Issues são públicas.
+
+## Autoria e licença
+
+Criado por **[kilinel](https://github.com/kilinel)** e distribuído sob a [licença MIT](LICENSE).
+
+Este é um projeto independente para a comunidade. Não é um aplicativo oficial da liga ALSA, do Discord ou dos desenvolvedores de Azure Latch.

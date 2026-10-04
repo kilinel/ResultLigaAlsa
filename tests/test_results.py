@@ -1,5 +1,5 @@
 import unittest
-from resultado_app import series_result, stats_text, generate, generate_extended, RANKED_TEMPLATE
+from resultado_app import series_result, stats_text, generate, generate_extended, RANKED_TEMPLATE, merge_contacts
 
 
 def sets(*scores):
@@ -49,6 +49,30 @@ class ResultsTests(unittest.TestCase):
         self.assertEqual(series_result(sets((0,1),(0,2),(0,3)), ['A','B'], best_of=5)[1], 'B')
         with self.assertRaises(ValueError):
             series_result(sets((3,1),(2,0),(1,0),(2,1)), ['A','B'], best_of=5)
+
+    def test_stale_window_does_not_erase_contacts(self):
+        empty={'players':{},'roles':{}}
+        saved={'players':{'Franklin':'<@7>'},'roles':{'Alpha':'<@&1>'}}
+        self.assertEqual(merge_contacts(empty,empty,saved),saved)
+
+    def test_contact_edits_preserve_other_sessions(self):
+        baseline={'players':{'A':'<@1>'},'roles':{}}
+        current={'players':{'A':'<@2>','B':'<@3>'},'roles':{}}
+        saved={'players':{'A':'<@1>','C':'<@4>'},'roles':{'Team':'<@&5>'}}
+        self.assertEqual(merge_contacts(current,baseline,saved),{'players':{'A':'<@2>','B':'<@3>','C':'<@4>'},'roles':{'Team':'<@&5>'}})
+        self.assertEqual(merge_contacts({'players':{},'roles':{}},baseline,saved)['players'],{'C':'<@4>'})
+
+    def test_per_match_totals_and_custom_rows(self):
+        row=dict(player='<@7>',g='2',a='1',d='3',s='0',emoji='',position='CF',sub=False)
+        matches=[[[row],[dict(row,player='<@8>',g='1')]], [[dict(row,g='4')],[]], [[],[]]]
+        text,_,_=generate_extended(dict(time1='A',time2='B'),'', '{stats1}\n{partida1_stats2}\n{partida2_stats1}\n{partida4_stats1}\n{partida2_placar}',sets((3,1),(2,0),(1,0)),[[],[]],matches,'{jogador}: {g} gols, {a} assists')
+        self.assertIn('<@7>: 6 gols, 2 assists',text)
+        self.assertIn('<@8>: 1 gols, 1 assists',text)
+        self.assertIn('<@7>: 4 gols, 1 assists',text)
+        self.assertIn('2 — 0',text)
+        self.assertNotIn('{',text)
+        with self.assertRaises(ValueError):
+            generate_extended(dict(time1='A',time2='B'),'',RANKED_TEMPLATE,sets((3,1)),[[],[]],matches)
 
 
 if __name__ == '__main__':
