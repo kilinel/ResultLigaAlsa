@@ -42,7 +42,9 @@ Os dados ficam em `%APPDATA%\ResultadoDaLiga\preferencias.json`. Trocar o execut
 
 O app funciona localmente, sem login, token de bot, webhook ou envio automático. Copia a mensagem para sua área de transferência; você escolhe onde colar. Emojis personalizados precisam existir no servidor do Discord. Mensagens extensas podem precisar ser enviadas em partes.
 
-O executável não possui assinatura digital. O código e o processo de compilação ficam públicos para inspeção. Este é um aplicativo comunitário; não representa o Discord ou os desenvolvedores de Azure Latch.
+O executável não possui assinatura digital. O código e o processo de compilação ficam públicos para inspeção.
+
+Este aplicativo é um projeto independente, de autoria do criador deste repositório, desenvolvido para facilitar a publicação de resultados pela comunidade. Não é um aplicativo oficial e não representa a liga ALSA, o Discord ou os desenvolvedores de Azure Latch.
 
 ## Executar o código
 
