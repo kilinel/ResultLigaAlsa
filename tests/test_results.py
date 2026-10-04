@@ -23,9 +23,9 @@ class ResultsTests(unittest.TestCase):
     def test_both_teams_stats_and_mentions(self):
         row = dict(player='<@7>', g='3', a='2', d='9', s='1', emoji=':sillyBarou:', position='CF', sub=True)
         values = dict(time1='<@&1>', time2='<@&2>', tipo='RANKED', mvp1='<@7>', mvp3='<@8>', refs='<@10>')
-        message, winner, wins = generate_extended(values, 'teste', RANKED_TEMPLATE, sets((3, 1), (4, 2)), [[row], [dict(row, player='<@8>')]])
-        self.assertEqual((winner, wins), ('<@&1>', [2, 0]))
-        for expected in ['RESULTADOS DA RANKED', 'Resultado: 2-0', '# Stats — <@&2>',
+        message, winner, wins = generate_extended(values, 'teste', RANKED_TEMPLATE, sets((3, 1), (4, 2), (1, 0)), [[row], [dict(row, player='<@8>')]])
+        self.assertEqual((winner, wins), ('<@&1>', [3, 0]))
+        for expected in ['RESULTADOS DA RANKED', 'Resultado: 3-0', '# Stats — <@&2>',
                          '**<@8> (sub)**: 3G 2A 9D 1S', '# 🏅 MVP: <@7>, <@8>', '-# hm: teste']:
             self.assertIn(expected, message)
         self.assertNotIn('{', message)
@@ -39,6 +39,16 @@ class ResultsTests(unittest.TestCase):
     def test_stats_missing_player(self):
         with self.assertRaises(ValueError):
             stats_text([dict(player='', g='1')])
+
+    def test_ranked_first_three_wins(self):
+        for scores, expected in [(((3,1),(2,0),(1,0)),[3,0]), (((3,1),(0,1),(2,0),(1,0)),[3,1]), (((3,1),(0,1),(2,0),(0,1),(1,0)),[3,2])]:
+            wins, winner, _ = series_result(sets(*scores), ['A','B'], best_of=5)
+            self.assertEqual(wins, expected)
+            self.assertEqual(winner, 'A')
+        self.assertEqual(series_result(sets((3,1),(1,0)), ['A','B'], best_of=5)[1], 'Em andamento')
+        self.assertEqual(series_result(sets((0,1),(0,2),(0,3)), ['A','B'], best_of=5)[1], 'B')
+        with self.assertRaises(ValueError):
+            series_result(sets((3,1),(2,0),(1,0),(2,1)), ['A','B'], best_of=5)
 
 
 if __name__ == '__main__':

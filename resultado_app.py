@@ -8,6 +8,79 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter import font as tkfont
 
+APP_VERSION = '0.2.0'
+
+
+class RoundedField(tk.Canvas):
+    """Rounded shell with a border-free native input and normal keyboard support."""
+    def __init__(self, parent, textvariable=None, width=12, values=None, state='normal', **kwargs):
+        super().__init__(parent, height=38, width=max(80, width * 9), bg='#10131c', highlightthickness=0, bd=0)
+        if values is None:
+            self.input = tk.Entry(self, textvariable=textvariable, bd=0, relief='flat',
+                                  bg='#1d2333', fg='#e9edf6', insertbackground='white',
+                                  readonlybackground='#1d2333', disabledbackground='#1d2333',
+                                  font=tkfont.nametofont('TkDefaultFont'), highlightthickness=0,
+                                  selectbackground='#4657bc', exportselection=False)
+        else:
+            self.input = ttk.Combobox(self, textvariable=textvariable, values=values, style='Minimal.TCombobox')
+        self.input.configure(state=state)
+        self.bind('<Configure>', self.redraw)
+        self.input.bind('<FocusIn>', lambda _: self.redraw())
+        self.input.bind('<FocusOut>', lambda _: self.redraw())
+
+    def redraw(self, _event=None):
+        w, h, r = self.winfo_width(), 38, 12
+        self.delete('shell')
+        points = [r,0,w-r,0,w,0,w,r,w,h-r,w,h,w-r,h,r,h,0,h,0,h-r,0,r,0,0]
+        self.create_polygon(points, smooth=True, fill='#1d2333', outline='', tags='shell')
+        self.input.place(x=12, y=8, width=max(20, w-24), height=22)
+
+    def configure(self, cnf=None, **kwargs):
+        if hasattr(self, 'input'):
+            for key in ('state', 'values'):
+                if key in kwargs:
+                    self.input.configure(**{key: kwargs.pop(key)})
+        return super().configure(cnf, **kwargs)
+
+
+class RoundedButton(tk.Canvas):
+    def __init__(self, parent, text='', command=None, style='', **kwargs):
+        super().__init__(parent, height=40, width=max(90, len(text)*8+28), bg='#10131c', bd=0, highlightthickness=0, takefocus=True, cursor='hand2')
+        self.text, self.command, self.disabled = text, command, False
+        self.accent = style == 'Accent.TButton'
+        self.hover = False
+        self.bind('<Configure>', self.redraw)
+        self.bind('<Enter>', lambda _: self.set_hover(True))
+        self.bind('<Leave>', lambda _: self.set_hover(False))
+        self.bind('<Button-1>', self.invoke)
+        self.bind('<Return>', self.invoke)
+        self.bind('<space>', self.invoke)
+
+    def set_hover(self, value):
+        self.hover = value
+        self.redraw()
+
+    def redraw(self, _event=None):
+        self.delete('all')
+        w,h,r = self.winfo_width(),40,12
+        color = '#303a53' if self.hover else '#222a3d'
+        if self.accent:
+            color = '#6674ff' if self.hover else '#5865f2'
+        if self.disabled:
+            color = '#222636'
+        self.create_polygon([r,0,w-r,0,w,0,w,r,w,h-r,w,h,w-r,h,r,h,0,h,0,h-r,0,r,0,0], smooth=True, fill=color, outline='')
+        self.create_text(w/2,h/2,text=self.text,fill='#737e98' if self.disabled else '#eef1ff',font=tkfont.nametofont('TkDefaultFont'))
+
+    def invoke(self, _event=None):
+        if not self.disabled and self.command:
+            self.command()
+
+    def configure(self, cnf=None, **kwargs):
+        if 'state' in kwargs:
+            self.disabled = kwargs.pop('state') == 'disabled'
+            self.redraw()
+        return super().configure(cnf, **kwargs)
+
 
 def load_fonts(root):
     """Register bundled fonts privately, without changing Windows font settings."""
@@ -63,7 +136,7 @@ RANKED_TEMPLATE = """# 🏆 RESULTADOS DA {tipo} 🏆
 # 🛡️ MVD: {mvds}
 # 🧤 GK: {gks}
 
-# Sets — Melhor de 3
+# Sets — Primeiro a 3 vitórias
 {sets}
 
 # Stats — {time1}
@@ -82,7 +155,8 @@ def number(raw, label):
     return int(raw)
 
 
-def series_result(sets, teams):
+def series_result(sets, teams, best_of=3):
+    target = best_of // 2 + 1
     wins = [0, 0]
     lines = []
     gap = False
@@ -93,8 +167,8 @@ def series_result(sets, teams):
             continue
         if gap:
             raise ValueError('Preencha os sets em ordem, sem pular um set.')
-        if max(wins) == 2:
-            raise ValueError('A melhor de 3 já terminou. Deixe o set restante vazio.')
+        if index > best_of or max(wins) == target:
+            raise ValueError(f'A série termina em {target} vitórias. Deixe partidas não jogadas vazias.')
         sa, sb = number(a, f'Set {index}, time 1'), number(b, f'Set {index}, time 2')
         if sa == sb:
             raise ValueError(f'Set {index}: informe o placar final sem empate.')
@@ -104,7 +178,7 @@ def series_result(sets, teams):
         if item.get('mvp', '').strip():
             line += ' | MVP: **' + item['mvp'].strip() + '**'
         lines.append(line)
-    winner = teams[wins.index(2)] if 2 in wins else 'Em andamento'
+    winner = teams[wins.index(target)] if target in wins else 'Em andamento'
     return wins, winner, '\n'.join(lines) or 'Nenhum set informado.'
 
 
@@ -124,7 +198,7 @@ def stats_text(rows):
 
 
 def generate_extended(values, hms, template, sets, stats):
-    wins, winner, set_lines = series_result(sets, [values['time1'], values['time2']])
+    wins, winner, set_lines = series_result(sets, [values['time1'], values['time2']], best_of=5)
     values = dict(values, placar1=str(wins[0]), placar2=str(wins[1]))
     base, _ = generate(values, hms, '{motm}')
     data = dict(values, vencedor=winner, tipo=values.get('tipo', 'RANKED'), sets=set_lines,
@@ -163,7 +237,9 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.sans, self.mono = load_fonts(self)
-        self.title('Resultado da Liga ALSA')
+        for name in ('TkDefaultFont', 'TkTextFont', 'TkMenuFont'):
+            tkfont.nametofont(name).configure(family=self.sans, size=10)
+        self.title('ALSA Match Results')
         assets = Path(__file__).parent / 'assets'
         self.window_icon = tk.PhotoImage(file=str(assets / 'icon.png'))
         self.iconphoto(True, self.window_icon)
@@ -200,6 +276,11 @@ class App(tk.Tk):
         style.configure('Accent.TButton', background='#5865f2', foreground='white', font=(self.sans, 11, 'bold'))
         style.map('Accent.TButton', background=[('active', '#4752c4')])
         style.configure('TEntry', fieldbackground='#1d2333', foreground='#e9edf6', insertcolor='white', padding=6)
+        style.layout('Minimal.TCombobox', [('Combobox.padding', {'sticky': 'nswe', 'children': [('Combobox.downarrow', {'side': 'right', 'sticky': 'ns'}), ('Combobox.textarea', {'sticky': 'nswe'})]})])
+        style.configure('Minimal.TCombobox', fieldbackground='#1d2333', background='#1d2333', foreground='#e9edf6', arrowcolor='#8d99bb', borderwidth=0, padding=0)
+        style.map('Minimal.TCombobox', fieldbackground=[('readonly', '#1d2333')], foreground=[('readonly', '#e9edf6')], selectbackground=[('!disabled', '#4657bc')])
+        style.layout('TButton', [('Button.padding', {'sticky': 'nswe', 'children': [('Button.label', {'sticky': 'nswe'})]})])
+        style.layout('TNotebook.Tab', [('Notebook.tab', {'sticky': 'nswe', 'children': [('Notebook.padding', {'side': 'top', 'sticky': 'nswe', 'children': [('Notebook.label', {'side': 'top', 'sticky': ''})]})]})])
         style.configure('TCombobox', fieldbackground='#1d2333', background='#252c40', foreground='#e9edf6', arrowcolor='#b4c3ff', padding=6)
         style.map('TCombobox', fieldbackground=[('readonly', '#1d2333')], foreground=[('readonly', '#e9edf6')])
         style.map('TEntry', fieldbackground=[('readonly', '#202738')], foreground=[('readonly', '#a9b8df')])
@@ -225,11 +306,17 @@ class App(tk.Tk):
         ttk.Label(heading, text='Azure Latch South America League • Da partida ao Discord, em poucos cliques.', foreground='#aeb8d0').pack(anchor='w', pady=(4, 0))
         self.mode_tabs = ttk.Notebook(outer)
         self.mode_tabs.pack(fill='x', pady=(0, 16))
-        for name, description in [('Amistoso', 'Placar direto, destaques e HMs. Ideal para amistosos e scrims.'), ('Ranked / Detalhe', 'Melhor de 3, placares dos sets e estatísticas dos dois times.')]:
+        for name, description in [('Amistoso', 'Placar direto, destaques e HMs. Ideal para amistosos e scrims.'), ('Ranked / Detalhe', 'Primeiro a 3 vitórias • até 5 partidas • estatísticas dos dois times.')]:
             page = ttk.Frame(self.mode_tabs, padding=12)
             ttk.Label(page, text=description, foreground='#b5c1df').pack(anchor='w')
             self.mode_tabs.add(page, text=name)
         self.mode_tabs.bind('<<NotebookTabChanged>>', self.change_mode)
+        footer = ttk.Frame(outer, padding=(0, 12, 0, 0))
+        footer.pack(side='bottom', fill='x')
+        footer.columnconfigure(0, weight=1)
+        footer.columnconfigure(2, weight=1)
+        ttk.Label(footer, text=f'ALSA Match Results · v{APP_VERSION}', foreground='#7e8aa8', font=(self.mono, 9)).grid(row=0, column=1)
+        RoundedButton(footer, text='Dúvidas / FAQ', command=self.show_faq).grid(row=0, column=2, sticky='e')
         panes = ttk.Panedwindow(outer, orient='horizontal')
         panes.pack(fill='both', expand=True)
         left_container = ttk.Frame(panes)
@@ -275,21 +362,15 @@ class App(tk.Tk):
         tabs.add(contacts_tab, text='Jogadores e cargos')
         self.build_contacts(contacts_tab)
         self.preview = self.text_area(preview_tab)
-        ttk.Label(template_tab, text='Use os marcadores abaixo onde quiser inserir os campos.', wraplength=430).pack(anchor='w', pady=6)
-        ttk.Label(template_tab, text='{time1} {placar1} {time2} {placar2} {vencedor}\n{motm} {mvp1} {mvp2} {mva1} {mva2}\n{mvd1} {mvd2} {gk} {hms}', wraplength=430).pack(anchor='w', pady=6)
-        self.template = self.text_area(template_tab)
-        self.template.insert('1.0', DEFAULT_TEMPLATE)
-        self.template.bind('<<Modified>>', self.modified)
-        ttk.Button(template_tab, text='Restaurar template inicial', command=self.reset_template).pack(anchor='w', pady=6)
-        ttk.Label(template_tab, text='Template Ranked / Scrim: {tipo} {sets} {stats1} {stats2}\n{mvps} {mvas} {mvds} {gks} {refs_linha} {motm_linha}\nTambém aceita os marcadores de times e placares acima.', wraplength=430).pack(anchor='w')
-        self.ranked_template = self.text_area(template_tab)
-        self.ranked_template.insert('1.0', RANKED_TEMPLATE)
-        self.ranked_template.bind('<<Modified>>', self.modified)
+        self.template_tabs = ttk.Notebook(template_tab)
+        self.template_tabs.pack(fill='both', expand=True)
+        self.template = self.build_template_editor('Template Amistoso', DEFAULT_TEMPLATE, False)
+        self.ranked_template = self.build_template_editor('Template Ranked', RANKED_TEMPLATE, True)
         self.status = tk.StringVar()
         ttk.Label(right, textvariable=self.status, wraplength=420).pack(anchor='w', pady=8)
-        self.copy_button = ttk.Button(right, text='Copiar mensagem para o Discord', style='Accent.TButton', command=self.copy)
+        self.copy_button = RoundedButton(right, text='Copiar mensagem para o Discord', style='Accent.TButton', command=self.copy)
         self.copy_button.pack(fill='x')
-        ttk.Button(right, text='Importar cadastros da versão anterior', command=self.import_preferences).pack(fill='x', pady=(8, 0))
+        RoundedButton(right, text='Importar cadastros da versão anterior', command=self.import_preferences).pack(fill='x', pady=(8, 0))
         self.load_preferences()
         self.refresh_contacts()
         self.update_preview()
@@ -300,12 +381,12 @@ class App(tk.Tk):
         var = tk.StringVar(value=initial)
         self.vars[key] = var
         if key.endswith('_emoji'):
-            widget = ttk.Combobox(parent, textvariable=var, values=EMOJIS)
+            widget = RoundedField(parent, textvariable=var, values=EMOJIS)
         elif key in ('time1', 'time2') or key in dict(AWARDS):
-            widget = ttk.Combobox(parent, textvariable=var)
+            widget = RoundedField(parent, textvariable=var, values=())
             self.pickers[key] = widget
         else:
-            widget = ttk.Entry(parent, textvariable=var)
+            widget = RoundedField(parent, textvariable=var)
         widget.grid(row=row, column=column, columnspan=span, sticky='ew', padx=4, pady=4)
         if key in ('placar1', 'placar2'):
             self.score_widgets[key] = widget
@@ -349,6 +430,7 @@ class App(tk.Tk):
             self.friendly_scores = [self.vars[k].get() for k in ('placar1', 'placar2')]
         self.previous_mode_ranked = ranked
         self.format_mode.set('Ranked / Scrim (com stats)' if ranked else 'Template antigo / personalizado')
+        self.template_tabs.select(1 if ranked else 0)
         if ranked:
             self.input_tabs.add(self.details_page, text='Sets e estatísticas')
         else:
@@ -357,6 +439,71 @@ class App(tk.Tk):
             self.input_tabs.select(0)
             self.input_tabs.hide(self.details_page)
         self.update_preview()
+
+    def build_template_editor(self, title, default, ranked):
+        page = ttk.Frame(self.template_tabs, padding=10)
+        self.template_tabs.add(page, text=title)
+        help_text = ('{sets}: placares e vencedor de cada partida\n{stats1} / {stats2}: estatísticas de cada time\n{mvps} {mvas} {mvds} {gks}: listas de premiados\n{refs_linha}: árbitro · {ping_resultados}: ping final' if ranked else
+                     '{motm}, {mvp1}, {mvp2}, {mva1}, {mva2},\n{mvd1}, {mvd2}, {gk}: jogador + emoji')
+        ttk.Label(page, text=help_text, wraplength=450, foreground='#aeb8d0').pack(anchor='w', pady=(0, 8))
+        ttk.Label(page, text='Clique num marcador para inserir no cursor.', foreground='#aeb8d0').pack(anchor='w')
+        markers = ttk.Frame(page)
+        markers.pack(fill='x', pady=8)
+        names = ['time1','time2','placar1','placar2','vencedor','hms'] + (['sets','stats1','stats2','mvps','mvas','mvds','gks','refs_linha','motm_linha','ping_resultados'] if ranked else ['motm','mvp1','mvp2','mva1','mva2','mvd1','mvd2','gk'])
+        editor = self.text_area(page)
+        editor.insert('1.0', default)
+        editor.bind('<<Modified>>', self.modified)
+        for index, key in enumerate(names):
+            def insert(k=key):
+                editor.insert('insert', '{' + k + '}')
+                editor.focus_set()
+            RoundedButton(markers, text='{' + key + '}', command=insert).grid(row=index//3, column=index%3, sticky='ew', padx=2, pady=2)
+        for col in range(3):
+            markers.columnconfigure(col, weight=1)
+        controls = ttk.Frame(page)
+        controls.pack(fill='x', pady=(10,0))
+        def restore():
+            editor.delete('1.0','end')
+            editor.insert('1.0',default)
+            self.update_preview()
+        RoundedButton(controls, text='Restaurar', command=restore).pack(side='left')
+        def save():
+            if self.save_preferences():
+                self.status.set(title + ' salvo. Os dois formatos são guardados separadamente.')
+        RoundedButton(controls, text='Salvar template', command=save, style='Accent.TButton').pack(side='right')
+        return editor
+
+    def show_faq(self):
+        if hasattr(self, 'faq_window') and self.faq_window.winfo_exists():
+            self.faq_window.lift()
+            return
+        win = self.faq_window = tk.Toplevel(self)
+        win.title('Dúvidas • ALSA Match Results')
+        win.geometry('650x650')
+        win.configure(bg='#10131c')
+        win.iconphoto(True, self.window_icon)
+        content = self.scroll_frame(win)
+        content.master.master.pack(fill='both', expand=True)
+        ttk.Label(content, text='Como podemos ajudar?', font=(self.sans,18,'bold')).pack(anchor='w', pady=12)
+        questions = [
+            ('Como pego o ID de um jogador?', 'No Discord: Configurações do usuário → Avançado → ative Modo desenvolvedor. Clique com o botão direito no NOME da pessoa (na mensagem ou lista de membros) → Copiar ID do usuário. Em Jogadores e cargos, selecione Jogador e cole o número. O app cria <@ID>.'),
+            ('Como pego o ID de um cargo?', 'Com o Modo desenvolvedor ativo e acesso às configurações do servidor: Configurações do servidor → Cargos → menu do cargo → Copiar ID do cargo. Cadastre como Cargo / time; o app cria <@&ID>. Se não tiver acesso, peça o ID ao administrador da liga.'),
+            ('Posso usar Copiar ID da mensagem?', 'Não. O ID da mensagem identifica a mensagem, não a pessoa nem o cargo. Para jogador, copie o ID do usuário; para time, copie o ID do cargo. Digitar apenas @nome também não gera o ping.'),
+            ('Como funciona o placar Ranked?', 'Cada partida soma uma vitória para quem marcou mais gols. Ex.: 3–1 em gols soma 1–0 na série. Quem vencer 3 partidas ganha a série. Ela termina em 3–0, 3–1 ou 3–2. Use + Adicionar partida para incluir a quarta ou quinta. Pare na terceira vitória.'),
+            ('Como salvo o REF e o ping de resultados?', 'Cadastre o árbitro como Jogador. No Ranked, selecione seu nome no campo REF. O ping final é texto livre: cole <@&ID> para cargo ou <@ID> para usuário. Ele fica salvo ao salvar as preferências ou fechar o app.'),
+            ('Como edito e salvo os dois templates?', 'Abra Editar template. Escolha Template Amistoso ou Template Ranked. Os botões de marcadores inserem o campo no cursor. No Ranked, use {sets}, {stats1}, {stats2} e as listas de premiados. Clique Salvar template. Cada formato fica salvo separadamente.'),
+            ('Como copio e envio o resultado?', 'Clique Copiar mensagem para o Discord e cole com Ctrl+V no canal da liga. A prévia mostra o markdown em texto. O Discord transforma pings e emojis válidos na mensagem enviada.'),
+            ('Onde ficam meus dados?', 'Jogadores, cargos, templates e ping final ficam em %APPDATA%\\ResultadoDaLiga\\preferencias.json. Atualizar o executável preserva esse arquivo. Stats e campos da partida não são salvos ao fechar.')]
+        for title, answer in questions:
+            card = ttk.Frame(content, padding=(0,6))
+            card.pack(fill='x')
+            body = ttk.Label(card, text=answer, wraplength=550, padding=12, foreground='#b5c1df')
+            opened = [False]
+            def toggle(b=body, state=opened):
+                state[0] = not state[0]
+                if state[0]: b.pack(fill='x')
+                else: b.pack_forget()
+            RoundedButton(card, text=title, command=toggle).pack(fill='x')
 
     def import_preferences(self):
         from tkinter import filedialog
@@ -386,40 +533,52 @@ class App(tk.Tk):
     def detail_var(self, parent, initial='', kind='text', width=12):
         var = tk.StringVar(value=initial)
         if kind == 'player':
-            widget = ttk.Combobox(parent, textvariable=var, width=width)
+            widget = RoundedField(parent, textvariable=var, values=(), width=width)
             self.extra_pickers.append(widget)
         elif kind == 'emoji':
-            widget = ttk.Combobox(parent, textvariable=var, values=EMOJIS, width=width)
+            widget = RoundedField(parent, textvariable=var, values=EMOJIS, width=width)
         else:
-            widget = ttk.Entry(parent, textvariable=var, width=width)
+            widget = RoundedField(parent, textvariable=var, width=width)
         var.trace_add('write', lambda *_: self.update_preview())
         return var, widget
 
     def build_details(self, parent):
         self.tipo = tk.StringVar(value='RANKED')
-        self.refs, widget = self.detail_var(parent)
-        ttk.Label(parent, text='REFS (opcional — cole um ou mais pings)').pack(anchor='w')
+        self.refs, widget = self.detail_var(parent, kind='player')
+        ttk.Label(parent, text='REF (selecione um jogador salvo ou cole o ping)').pack(anchor='w')
         widget.pack(fill='x', pady=4)
         self.results_ping, widget = self.detail_var(parent)
         ttk.Label(parent, text='Ping de resultados (opcional)').pack(anchor='w')
         widget.pack(fill='x', pady=4)
-        ttk.Label(parent, text='Melhor de 3: primeiro a vencer 2 sets.\nPreencha os gols de cada set; deixe sets não jogados vazios.', wraplength=430).pack(anchor='w', pady=8)
-        for index in range(3):
-            frame = ttk.LabelFrame(parent, text=f'Set {index + 1}', padding=6)
-            frame.pack(fill='x', pady=4)
-            row = {}
-            for col, (key, label, kind) in enumerate([('a', 'Gols time 1', 'text'), ('b', 'Gols time 2', 'text'), ('mvp', 'MVP opcional', 'player')]):
-                ttk.Label(frame, text=label).grid(row=0, column=col, sticky='w')
-                row[key], widget = self.detail_var(frame, kind=kind)
-                widget.grid(row=1, column=col, sticky='ew', padx=2)
-                frame.columnconfigure(col, weight=1)
-            self.set_rows.append(row)
+        ttk.Label(parent, text='Primeiro a 3 vitórias: até 5 partidas.\nEx.: vencer 3–1 em gols soma UMA vitória na série.\nPare em 3–0, 3–1 ou 3–2; deixe partidas restantes vazias.', wraplength=430).pack(anchor='w', pady=8)
+        self.set_container = ttk.Frame(parent)
+        self.set_container.pack(fill='x')
+        self.add_set_button = RoundedButton(parent, text='+ Adicionar partida', command=self.add_set)
+        self.add_set_button.pack(fill='x', pady=6)
+        for _ in range(3):
+            self.add_set()
         ttk.Label(parent, text='Stats: totais da série por jogador (dos dois times).\nG = gols; A = assistências; D = defesas/desarmes; S = saves.\nInclua reservas com a opção Sub.', wraplength=430).pack(anchor='w', pady=8)
         for team in range(2):
             frame = ttk.LabelFrame(parent, text=f'Estatísticas do time {team + 1}', padding=6)
             frame.pack(fill='x', pady=6)
-            ttk.Button(frame, text='+ Adicionar jogador', command=lambda t=team, f=frame: self.add_stat(t, f)).pack(fill='x')
+            RoundedButton(frame, text='+ Adicionar jogador', command=lambda t=team, f=frame: self.add_stat(t, f)).pack(fill='x')
             self.add_stat(team, frame)
+
+    def add_set(self):
+        if len(self.set_rows) >= 5:
+            return
+        frame = ttk.LabelFrame(self.set_container, text=f'Partida {len(self.set_rows)+1}', padding=10)
+        frame.pack(fill='x', pady=6)
+        row = {}
+        for col, (key,label,kind) in enumerate([('a','Gols time 1','text'),('b','Gols time 2','text'),('mvp','MVP opcional','player')]):
+            ttk.Label(frame,text=label).grid(row=0,column=col,sticky='w',pady=(0,4))
+            row[key], widget = self.detail_var(frame,kind=kind)
+            widget.grid(row=1,column=col,sticky='ew',padx=3)
+            frame.columnconfigure(col,weight=1)
+        self.set_rows.append(row)
+        self.add_set_button.configure(state='disabled' if len(self.set_rows)==5 else 'normal')
+        for picker in self.extra_pickers:
+            picker.configure(values=sorted(self.contacts['players'], key=str.casefold))
 
     def add_stat(self, team, parent):
         frame = ttk.Frame(parent, padding=(0, 6))
@@ -447,7 +606,7 @@ class App(tk.Tk):
             self.extra_pickers[:] = [p for p in self.extra_pickers if p.winfo_exists() and not str(p).startswith(str(frame) + '.')]
             frame.destroy()
             self.update_preview()
-        ttk.Button(frame, text='Remover', command=remove).grid(row=5, column=3)
+        RoundedButton(frame, text='Remover', command=remove).grid(row=5, column=3)
         for picker in self.extra_pickers:
             picker.configure(values=sorted(self.contacts['players'], key=str.casefold))
 
@@ -471,7 +630,7 @@ class App(tk.Tk):
                 resolve = lambda text: self.contacts['players'].get(text, text)
                 sets = [{k: resolve(v.get()) if k == 'mvp' else v.get() for k, v in row.items()} for row in self.set_rows]
                 stats = [[{k: resolve(v.get()) if k == 'player' else v.get() for k, v in row.items()} for row in rows] for rows in self.stat_rows]
-                values.update(tipo=self.tipo.get(), refs=self.refs.get(), ping_resultados=self.results_ping.get())
+                values.update(tipo=self.tipo.get(), refs=resolve(self.refs.get()), ping_resultados=self.results_ping.get())
                 message, winner, wins = generate_extended(values, self.hms.get('1.0', 'end-1c'), self.ranked_template.get('1.0', 'end-1c'), sets, stats)
                 # Show the series score in the main form, derived from sets.
                 for key, score in zip(('placar1', 'placar2'), wins):
@@ -521,28 +680,30 @@ class App(tk.Tk):
                 self.template.insert('1.0', data['template'])
             if isinstance(data.get('ranked_template'), str):
                 self.ranked_template.delete('1.0', 'end')
-                self.ranked_template.insert('1.0', data['ranked_template'])
+                self.ranked_template.insert('1.0', data['ranked_template'].replace('# Sets — Melhor de 3', '# Sets — Primeiro a 3 vitórias'))
+            if isinstance(data.get('results_ping'), str):
+                self.results_ping.set(data['results_ping'])
         except (OSError, ValueError, AttributeError):
             pass
 
     def build_contacts(self, parent):
         ttk.Label(parent, text='Cadastre uma vez e selecione pelo nome nos campos da partida.', wraplength=400).pack(anchor='w', pady=6)
         self.contact_kind = tk.StringVar(value='Jogador')
-        ttk.Combobox(parent, textvariable=self.contact_kind, values=('Jogador', 'Cargo / time'), state='readonly').pack(fill='x', pady=4)
+        RoundedField(parent, textvariable=self.contact_kind, values=('Jogador', 'Cargo / time'), state='readonly').pack(fill='x', pady=4)
         ttk.Label(parent, text='Nome para reconhecer (ex.: Vielism ou Requiem)').pack(anchor='w')
         self.contact_name = tk.StringVar()
-        ttk.Entry(parent, textvariable=self.contact_name).pack(fill='x', pady=4)
+        RoundedField(parent, textvariable=self.contact_name).pack(fill='x', pady=4)
         ttk.Label(parent, text='ID ou ping (ex.: 123456789 ou <@123456789>)').pack(anchor='w')
         self.contact_ping = tk.StringVar()
-        ttk.Entry(parent, textvariable=self.contact_ping).pack(fill='x', pady=4)
-        ttk.Button(parent, text='Salvar / atualizar', command=self.save_contact).pack(fill='x', pady=6)
+        RoundedField(parent, textvariable=self.contact_ping).pack(fill='x', pady=4)
+        RoundedButton(parent, text='Salvar / atualizar', command=self.save_contact).pack(fill='x', pady=6)
         self.contact_list = ttk.Treeview(parent, columns=('kind', 'name', 'ping'), show='headings', selectmode='browse', height=8)
         for col, label, width in [('kind', 'Tipo', 70), ('name', 'Nome', 110), ('ping', 'Ping', 170)]:
             self.contact_list.heading(col, text=label)
             self.contact_list.column(col, width=width)
         self.contact_list.pack(fill='both', expand=True)
         self.contact_list.bind('<<TreeviewSelect>>', self.select_contact)
-        ttk.Button(parent, text='Excluir selecionado', command=self.delete_contact).pack(fill='x', pady=6)
+        RoundedButton(parent, text='Excluir selecionado', command=self.delete_contact).pack(fill='x', pady=6)
 
     def refresh_contacts(self):
         self.contact_list.delete(*self.contact_list.get_children())
@@ -601,6 +762,8 @@ class App(tk.Tk):
             if expected == group and self.vars[key].get() == name:
                 self.vars[key].set(ping)
         if group == 'players':
+            if self.refs.get() == name:
+                self.refs.set(ping)
             for row in self.set_rows:
                 if row['mvp'].get() == name:
                     row['mvp'].set(ping)
@@ -615,6 +778,8 @@ class App(tk.Tk):
             data = {'template': self.template.get('1.0', 'end-1c'), **self.contacts}
             if hasattr(self, 'ranked_template'):
                 data['ranked_template'] = self.ranked_template.get('1.0', 'end-1c')
+            if hasattr(self, 'results_ping'):
+                data['results_ping'] = self.results_ping.get()
             temporary = self.state_file.with_suffix('.tmp')
             temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
             temporary.replace(self.state_file)
@@ -630,4 +795,6 @@ class App(tk.Tk):
 
 if __name__ == '__main__':
     App().mainloop()
+
+
 
