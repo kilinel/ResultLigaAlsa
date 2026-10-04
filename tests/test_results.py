@@ -1,0 +1,45 @@
+import unittest
+from resultado_app import series_result, stats_text, generate, generate_extended, RANKED_TEMPLATE
+
+
+def sets(*scores):
+    return [dict(a=str(a), b=str(b), mvp='<@7>') for a, b in scores]
+
+
+class ResultsTests(unittest.TestCase):
+    def test_series_winners(self):
+        self.assertEqual(series_result(sets((3, 1), (2, 4), (5, 2)), ['A', 'B'])[:2], ([2, 1], 'A'))
+        self.assertEqual(series_result(sets((0, 3), (1, 2)), ['A', 'B'])[:2], ([0, 2], 'B'))
+
+    def test_incomplete_series(self):
+        self.assertEqual(series_result(sets((1, 0)), ['A', 'B'])[1], 'Em andamento')
+
+    def test_invalid_series(self):
+        for invalid in [sets((1, 1)), sets((1, 0), (2, 0), (1, 0)),
+                        [dict(a='', b='', mvp=''), dict(a='2', b='1', mvp='')], sets((-1, 1))]:
+            with self.subTest(sets=invalid), self.assertRaises(ValueError):
+                series_result(invalid, ['A', 'B'])
+
+    def test_both_teams_stats_and_mentions(self):
+        row = dict(player='<@7>', g='3', a='2', d='9', s='1', emoji=':sillyBarou:', position='CF', sub=True)
+        values = dict(time1='<@&1>', time2='<@&2>', tipo='RANKED', mvp1='<@7>', mvp3='<@8>', refs='<@10>')
+        message, winner, wins = generate_extended(values, 'teste', RANKED_TEMPLATE, sets((3, 1), (4, 2)), [[row], [dict(row, player='<@8>')]])
+        self.assertEqual((winner, wins), ('<@&1>', [2, 0]))
+        for expected in ['RESULTADOS DA RANKED', 'Resultado: 2-0', '# Stats — <@&2>',
+                         '**<@8> (sub)**: 3G 2A 9D 1S', '# 🏅 MVP: <@7>, <@8>', '-# hm: teste']:
+            self.assertIn(expected, message)
+        self.assertNotIn('{', message)
+
+    def test_friendly_tie_and_hm(self):
+        values = dict(time1='A', time2='B', placar1='2', placar2='2')
+        text, winner = generate(values, 'a\n-# hm: b', '{vencedor}\n{hms}')
+        self.assertEqual(winner, 'Empate')
+        self.assertEqual(text, 'Empate\n-# hm: a\n-# hm: b')
+
+    def test_stats_missing_player(self):
+        with self.assertRaises(ValueError):
+            stats_text([dict(player='', g='1')])
+
+
+if __name__ == '__main__':
+    unittest.main()
