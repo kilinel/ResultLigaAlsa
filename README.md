@@ -25,13 +25,13 @@ O app organiza as informações que você preenche. Ao clicar em **Copiar mensag
 
 ## Versão web — sem instalação
 
-A versão web está em `docs/` e pode ser publicada pelo GitHub Pages. Tem Amistoso, Ranked, cadastros, stats dos dois times, templates e prévia editável. Os dados ficam no navegador; **Exportar JSON** cria um backup e **Importar JSON** permite levá-lo a outro dispositivo ou carregar as preferências desktop.
+A versão web está hospedada pelo GitHub Pages. Tem Amistoso, Ranked, cadastros, stats dos dois times, templates e prévia editável. Os dados ficam no navegador; **Exportar JSON** cria um backup e **Importar JSON** permite levá-lo a outro dispositivo ou carregar as preferências desktop.
 
-Para habilitar a publicação, após enviar os arquivos ao GitHub: **Settings → Pages → Build and deployment → Deploy from a branch → main → /docs → Save**. Aguarde a implantação. O endereço esperado é https://kilinel.github.io/ResultLigaAlsa/ (disponível somente após publicar).
+para acessar basta entrar no link: https://kilinel.github.io/ResultLigaAlsa/ 
 
 Na versão web, limpar os dados do site pode apagar o cadastro. Guarde um JSON de backup. Consulte a [privacidade da versão web](docs/PRIVACY.md).
 
-## Como instalar e abrir
+## Alternativa: Versão Python - Como instalar e abrir
 
 ### 1. Instale o Python — somente na primeira vez
 
@@ -68,7 +68,7 @@ py -3.12 resultado_app.py
 
 Se sua instalação usa o comando `python`, execute `python resultado_app.py`.
 
-### Alternativa: executável para Windows
+### Alternativa: exe para Windows
 
 Quando disponível na Release, **ResultadoDaLigaALSA.exe** abre o aplicativo sem precisar instalar Python. Essa opção pode exibir o aviso do SmartScreen explicado abaixo.
 
