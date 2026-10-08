@@ -23,6 +23,14 @@ O **Match Results ALSA** é um aplicativo gratuito para Windows feito por [kilin
 
 O app organiza as informações que você preenche. Ao clicar em **Copiar mensagem**, basta colar no canal da liga com **Ctrl+V**. A ajuda dentro do aplicativo explica como obter os IDs para mencionar jogadores e cargos.
 
+## Versão web — sem instalação
+
+A versão web está em `docs/` e pode ser publicada pelo GitHub Pages. Tem Amistoso, Ranked, cadastros, stats dos dois times, templates e prévia editável. Os dados ficam no navegador; **Exportar JSON** cria um backup e **Importar JSON** permite levá-lo a outro dispositivo ou carregar as preferências desktop.
+
+Para habilitar a publicação, após enviar os arquivos ao GitHub: **Settings → Pages → Build and deployment → Deploy from a branch → main → /docs → Save**. Aguarde a implantação. O endereço esperado é https://kilinel.github.io/ResultLigaAlsa/ (disponível somente após publicar).
+
+Na versão web, limpar os dados do site pode apagar o cadastro. Guarde um JSON de backup. Consulte a [privacidade da versão web](docs/PRIVACY.md).
+
 ## Como instalar e abrir
 
 ### 1. Instale o Python — somente na primeira vez
@@ -95,3 +103,4 @@ Encontrou um problema ou tem uma ideia? Abra uma [Issue](https://github.com/kili
 Criado por **[kilinel](https://github.com/kilinel)** e distribuído sob a [licença MIT](LICENSE).
 
 Este é um projeto independente para a comunidade. Não é um aplicativo oficial da liga ALSA, do Discord ou dos desenvolvedores de Azure Latch.
+
